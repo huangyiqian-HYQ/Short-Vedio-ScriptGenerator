@@ -1,0 +1,649 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>短视频脚本生成器 - 编辑导出</title>
+    <link rel="stylesheet" href="css/style.css">
+    <style>
+        .editor-container {
+            display: grid;
+            grid-template-columns: 1fr 300px;
+            gap: 20px;
+            padding: 20px;
+        }
+        .editor-main {
+            background: white;
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .editor-sidebar {
+            background: white;
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .editor-toolbar {
+            display: flex;
+            gap: 10px;
+            padding: 10px;
+            background: #f9f9f9;
+            border-radius: 8px;
+            margin-bottom: 15px;
+        }
+        .editor-toolbar button {
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            background: white;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .editor-toolbar button:hover {
+            background: #e0e0e0;
+        }
+        .editor-area {
+            width: 100%;
+            min-height: 400px;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 14px;
+            line-height: 1.8;
+            resize: vertical;
+        }
+        .format-options {
+            margin-top: 20px;
+        }
+        .format-option {
+            display: flex;
+            align-items: center;
+            margin: 10px 0;
+        }
+        .format-option input {
+            width: 18px;
+            height: 18px;
+            margin-right: 10px;
+        }
+        .export-section {
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid #eee;
+        }
+        .export-btn {
+            display: block;
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        .btn-txt {
+            background: #3498db;
+            color: white;
+        }
+        .btn-md {
+            background: #27ae60;
+            color: white;
+        }
+        .btn-copy {
+            background: #f1f1f1;
+            color: #666;
+        }
+        .subtitle-section {
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid #eee;
+        }
+        .subtitle-list {
+            margin-top: 10px;
+            padding: 10px;
+            background: #f9f9f9;
+            border-radius: 8px;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+        .subtitle-item {
+            padding: 8px;
+            margin: 5px 0;
+            background: white;
+            border-radius: 4px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .subtitle-item span {
+            flex: 1;
+        }
+        .subtitle-item button {
+            padding: 4px 8px;
+            background: #3498db;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+        .preview-table {
+            margin-top: 20px;
+            padding: 20px;
+            background: #f9f9f9;
+            border-radius: 8px;
+        }
+        .preview-table table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        .preview-table th, .preview-table td {
+            border: 1px solid #ddd;
+            padding: 10px;
+            text-align: left;
+        }
+        .preview-table th {
+            background: #e8f4fd;
+        }
+        .word-count-display {
+            text-align: right;
+            color: #888;
+            font-size: 14px;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar">
+        <div class="nav-brand">短视频脚本生成器</div>
+        <div class="nav-links">
+            <a href="create.html">脚本创作</a>
+            <a href="templates.html">模板库</a>
+            <a href="history.html">历史记录</a>
+            <a href="editor.html" class="active">编辑导出</a>
+        </div>
+        <div class="nav-user">
+            <span id="user-name"></span>
+            <button onclick="logout()" class="btn-logout">退出</button>
+        </div>
+    </nav>
+    
+    <div class="container">
+        <div class="editor-container">
+            <!-- 编辑区 -->
+            <div class="editor-main">
+                <h3>脚本编辑</h3>
+                
+                <!-- 工具栏 -->
+                <div class="editor-toolbar">
+                    <button onclick="formatBold()">加粗</button>
+                    <button onclick="formatItalic()">斜体</button>
+                    <button onclick="formatUnderline()">下划线</button>
+                    <button onclick="formatClear()">清除格式</button>
+                    <button onclick="insertBreak()">插入分隔线</button>
+                    <button onclick="formatAuto()">自动排版</button>
+                </div>
+                
+                <!-- 编辑器 -->
+                <textarea id="editor" class="editor-area" placeholder="请输入或粘贴脚本内容"></textarea>
+                
+                <div class="word-count-display">
+                    字数：<span id="editor-word-count">0</span>
+                </div>
+                
+                <!-- 表格预览 -->
+                <div id="table-preview" class="preview-table" style="display: none;">
+                    <h4>分镜头表格格式</h4>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>镜头</th>
+                                <th>画面</th>
+                                <th>台词</th>
+                                <th>背景音乐</th>
+                            </tr>
+                        </thead>
+                        <tbody id="table-body"></tbody>
+                    </table>
+                </div>
+            </div>
+            
+            <!-- 侧边栏 -->
+            <div class="editor-sidebar">
+                <h4>排版格式</h4>
+                <div class="format-options">
+                    <div class="format-option">
+                        <input type="radio" name="format" id="format-text" value="text" checked>
+                        <label for="format-text">纯文本格式</label>
+                    </div>
+                    <div class="format-option">
+                        <input type="radio" name="format" id="format-table" value="table">
+                        <label for="format-table">分镜头表格格式</label>
+                    </div>
+                </div>
+                
+                <!-- 导出 -->
+                <div class="export-section">
+                    <h4>导出文件</h4>
+                    <button onclick="exportTXT()" class="export-btn btn-txt">导出 TXT 文本文档</button>
+                    <button onclick="exportMarkdown()" class="export-btn btn-md">导出 Markdown 文档</button>
+                    <button onclick="copyAll()" class="export-btn btn-copy">一键复制全部文案</button>
+                </div>
+                
+                <!-- 字幕拆分 -->
+                <div class="subtitle-section">
+                    <h4>字幕拆分</h4>
+                    <p style="font-size: 12px; color: #888;">自动把台词拆分成短句，适配短视频字幕</p>
+                    <button onclick="splitSubtitles()" class="export-btn btn-txt">拆分字幕</button>
+                    <div id="subtitle-list" class="subtitle-list" style="display: none;"></div>
+                </div>
+                
+                <!-- 保存 -->
+                <div style="margin-top: 20px;">
+                    <button onclick="saveEdit()" class="export-btn btn-txt">保存修改</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div id="alert-container"></div>
+    
+    <script src="js/auth.js"></script>
+    <script>
+        let originalContent = '';
+        let scriptId = null;
+        
+        // 页面加载
+        document.addEventListener('DOMContentLoaded', function() {
+            checkAuth();
+            loadScript();
+            
+            // 监听编辑器变化
+            document.getElementById('editor').addEventListener('input', updateWordCount);
+            
+            // 监听格式切换
+            document.querySelectorAll('input[name="format"]').forEach(radio => {
+                radio.addEventListener('change', toggleFormat);
+            });
+        });
+        
+        // 检查登录状态
+        function checkAuth() {
+            const userInfo = localStorage.getItem('user_info');
+            const isGuest = localStorage.getItem('is_guest');
+            
+            if (userInfo) {
+                const user = JSON.parse(userInfo);
+                document.getElementById('user-name').textContent = user.username;
+            } else if (isGuest === 'true') {
+                document.getElementById('user-name').textContent = '游客';
+            }
+        }
+        
+        // 加载脚本
+        function loadScript() {
+            const editScriptStr = localStorage.getItem('edit_script');
+            if (editScriptStr) {
+                const editScript = JSON.parse(editScriptStr);
+                originalContent = editScript.content;
+                scriptId = editScript.id;
+                document.getElementById('editor').value = originalContent;
+                updateWordCount();
+                localStorage.removeItem('edit_script');
+            }
+        }
+        
+        // 更新字数统计
+        function updateWordCount() {
+            const content = document.getElementById('editor').value;
+            const wordCount = content.replace(/\s/g, '').length;
+            document.getElementById('editor-word-count').textContent = wordCount;
+        }
+        
+        // 格式化工具
+        function formatBold() {
+            insertFormat('**', '**');
+        }
+        
+        function formatItalic() {
+            insertFormat('*', '*');
+        }
+        
+        function formatUnderline() {
+            insertFormat('<u>', '</u>');
+        }
+        
+        function insertFormat(before, after) {
+            const editor = document.getElementById('editor');
+            const start = editor.selectionStart;
+            const end = editor.selectionEnd;
+            const text = editor.value;
+            
+            if (start !== end) {
+                const selected = text.substring(start, end);
+                editor.value = text.substring(0, start) + before + selected + after + text.substring(end);
+                editor.focus();
+                editor.setSelectionRange(start + before.length, end + before.length);
+            }
+        }
+        
+        function formatClear() {
+            const editor = document.getElementById('editor');
+            const content = editor.value;
+            editor.value = content.replace(/\*\*/g, '').replace(/\*/g, '').replace(/<u>/g, '').replace(/<\/u>/g, '');
+            updateWordCount();
+        }
+        
+        function insertBreak() {
+            const editor = document.getElementById('editor');
+            const pos = editor.selectionStart;
+            const text = editor.value;
+            editor.value = text.substring(0, pos) + '\n' + '='.repeat(50) + '\n' + text.substring(pos);
+            editor.focus();
+            updateWordCount();
+        }
+        
+        function formatAuto() {
+            const editor = document.getElementById('editor');
+            let content = editor.value;
+            
+            // 自动添加分隔
+            content = content.replace(/镜头\d/g, '\n\n$&');
+            content = content.replace(/【/g, '\n\n$&');
+            content = content.replace(/===/g, '\n' + '='.repeat(50) + '\n');
+            
+            editor.value = content.trim();
+            updateWordCount();
+            showAlert('排版完成', 'success');
+        }
+        
+        // 切换格式
+        function toggleFormat() {
+            const format = document.querySelector('input[name="format"]:checked').value;
+            const tablePreview = document.getElementById('table-preview');
+            
+            if (format === 'table') {
+                generateTable();
+                tablePreview.style.display = 'block';
+            } else {
+                tablePreview.style.display = 'none';
+            }
+        }
+        
+        // 生成表格
+        function generateTable() {
+            const content = document.getElementById('editor').value;
+            const lines = content.split('\n');
+            const tableBody = document.getElementById('table-body');
+            tableBody.innerHTML = '';
+            
+            let sceneNum = 1;
+            let currentScene = { scene: '', visual: '', dialogue: '', music: '' };
+            
+            lines.forEach(line => {
+                line = line.trim();
+                if (!line) return;
+                
+                if (line.startsWith('镜头') || line.includes('镜头')) {
+                    if (currentScene.scene) {
+                        addTableRow(tableBody, currentScene);
+                        sceneNum++;
+                    }
+                    currentScene = { scene: `镜头${sceneNum}`, visual: '', dialogue: '', music: '' };
+                } else if (line.includes('画面')) {
+                    currentScene.visual = line.replace('画面：', '').replace('画面:', '').trim();
+                } else if (line.includes('台词')) {
+                    currentScene.dialogue = line.replace('台词：', '').replace('台词:', '').trim();
+                } else if (line.includes('背景音乐')) {
+                    currentScene.music = line.replace('背景音乐：', '').replace('背景音乐:', '').trim();
+                }
+            });
+            
+            if (currentScene.scene) {
+                addTableRow(tableBody, currentScene);
+            }
+        }
+        
+        function addTableRow(tableBody, scene) {
+            const row = document.createElement('tr');
+            row.innerHTML = `
+                <td>${scene.scene}</td>
+                <td>${scene.visual}</td>
+                <td>${scene.dialogue}</td>
+                <td>${scene.music}</td>
+            `;
+            tableBody.appendChild(row);
+        }
+        
+        // 导出 TXT
+        function exportTXT() {
+            const content = document.getElementById('editor').value;
+            if (!content) {
+                showAlert('请先输入内容', 'error');
+                return;
+            }
+            
+            const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = '短视频脚本.txt';
+            a.click();
+            URL.revokeObjectURL(url);
+            
+            showAlert('导出成功', 'success');
+        }
+        
+        // 导出 Markdown
+        function exportMarkdown() {
+            const content = document.getElementById('editor').value;
+            if (!content) {
+                showAlert('请先输入内容', 'error');
+                return;
+            }
+            
+            // 转换为 Markdown 格式
+            let mdContent = '# 短视频脚本\n\n';
+            mdContent += content.replace(/【(.+?)】/g, '## $1\n\n');
+            mdContent = mdContent.replace(/镜头(\d+)/g, '\n### 镜头$1\n');
+            mdContent = mdContent.replace(/画面：(.+)/g, '- **画面**: $1\n');
+            mdContent = mdContent.replace(/台词：(.+)/g, '- **台词**: $1\n');
+            mdContent = mdContent.replace(/背景音乐：(.+)/g, '- **背景音乐**: $1\n');
+            
+            const blob = new Blob([mdContent], { type: 'text/markdown;charset=utf-8' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = '短视频脚本.md';
+            a.click();
+            URL.revokeObjectURL(url);
+            
+            showAlert('导出成功', 'success');
+        }
+        
+        // 复制全部
+        function copyAll() {
+            const content = document.getElementById('editor').value;
+            if (!content) {
+                showAlert('请先输入内容', 'error');
+                return;
+            }
+            
+            navigator.clipboard.writeText(content).then(() => {
+                showAlert('已复制到剪贴板', 'success');
+            }).catch(() => {
+                showAlert('复制失败', 'error');
+            });
+        }
+        
+        // 拆分字幕
+        async function splitSubtitles() {
+            const content = document.getElementById('editor').value;
+            if (!content) {
+                showAlert('请先输入内容', 'error');
+                return;
+            }
+            
+            // 提取台词
+            const dialogueRegex = /台词[：:]\s*["'](.+?)["']/g;
+            const dialogues = [];
+            let match;
+            
+            while ((match = dialogueRegex.exec(content)) !== null) {
+                dialogues.push(match[1]);
+            }
+            
+            if (dialogues.length === 0) {
+                // 如果没有台词标记，直接拆分全部内容
+                dialogues.push(content);
+            }
+            
+            try {
+                const token = getToken();
+                const headers = { 'Content-Type': 'application/json' };
+                if (token) {
+                    headers['Authorization'] = `Bearer ${token}`;
+                }
+                
+                const response = await fetch(`${API_BASE_URL}/script/subtitle`, {
+                    method: 'POST',
+                    headers: headers,
+                    body: JSON.stringify({ content: dialogues.join('\n') })
+                });
+                
+                const result = await response.json();
+                
+                if (result.code === 200) {
+                    displaySubtitles(result.data.subtitles);
+                    showAlert('字幕拆分完成', 'success');
+                } else {
+                    // 本地拆分
+                    const subtitles = localSplitSubtitles(dialogues.join('\n'));
+                    displaySubtitles(subtitles);
+                }
+            } catch (error) {
+                // 本地拆分
+                const subtitles = localSplitSubtitles(dialogues.join('\n'));
+                displaySubtitles(subtitles);
+            }
+        }
+        
+        // 本地字幕拆分
+        function localSplitSubtitles(text) {
+            const subtitles = [];
+            const sentences = text.split(/[。！？；\n]+/);
+            
+            sentences.forEach(sentence => {
+                sentence = sentence.trim();
+                if (!sentence) return;
+                
+                if (sentence.length > 20) {
+                    const parts = sentence.split(/[，、]+/);
+                    parts.forEach(part => {
+                        part = part.trim();
+                        if (part) {
+                            if (part.length > 20) {
+                                for (let i = 0; i < part.length; i += 20) {
+                                    subtitles.push(part.substring(i, i + 20));
+                                }
+                            } else {
+                                subtitles.push(part);
+                            }
+                        }
+                    });
+                } else {
+                    subtitles.push(sentence);
+                }
+            });
+            
+            return subtitles;
+        }
+        
+        // 显示字幕列表
+        function displaySubtitles(subtitles) {
+            const list = document.getElementById('subtitle-list');
+            list.innerHTML = '';
+            list.style.display = 'block';
+            
+            subtitles.forEach((subtitle, index) => {
+                const item = document.createElement('div');
+                item.className = 'subtitle-item';
+                item.innerHTML = `
+                    <span>${index + 1}. ${subtitle}</span>
+                    <button onclick="copySubtitle('${subtitle.replace(/'/g, "\\'")}')">复制</button>
+                `;
+                list.appendChild(item);
+            });
+        }
+        
+        // 复制单个字幕
+        function copySubtitle(text) {
+            navigator.clipboard.writeText(text).then(() => {
+                showAlert('已复制', 'success');
+            });
+        }
+        
+        // 保存修改
+        async function saveEdit() {
+            const content = document.getElementById('editor').value;
+            if (!content) {
+                showAlert('请先输入内容', 'error');
+                return;
+            }
+            
+            const token = getToken();
+            if (!token) {
+                // 游客模式保存到本地
+                const savedScripts = JSON.parse(localStorage.getItem('guest_scripts') || '[]');
+                const existingIndex = savedScripts.findIndex(s => s.id === scriptId);
+                
+                if (existingIndex >= 0) {
+                    savedScripts[existingIndex].script_content = content;
+                } else {
+                    savedScripts.push({
+                        id: Date.now(),
+                        topic: '编辑脚本',
+                        script_content: content,
+                        created_at: new Date().toISOString()
+                    });
+                }
+                
+                localStorage.setItem('guest_scripts', JSON.stringify(savedScripts));
+                showAlert('已保存到本地', 'success');
+                return;
+            }
+            
+            try {
+                const response = await fetch(`${API_BASE_URL}/script/${scriptId}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ script_content: content })
+                });
+                
+                const result = await response.json();
+                
+                if (result.code === 200) {
+                    showAlert('保存成功', 'success');
+                } else {
+                    showAlert(result.message, 'error');
+                }
+            } catch (error) {
+                showAlert('保存失败', 'error');
+            }
+        }
+        
+        // 退出登录
+        function logout() {
+            localStorage.removeItem('access_token');
+            localStorage.removeItem('user_info');
+            localStorage.removeItem('is_guest');
+            localStorage.removeItem('saved_username');
+            localStorage.removeItem('saved_password');
+            localStorage.removeItem('remember_checked');
+            window.location.href = 'login.html';
+        }
+    </script>
+</body>
+</html>

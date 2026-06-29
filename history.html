@@ -1,0 +1,645 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>短视频脚本生成器 - 历史记录</title>
+    <link rel="stylesheet" href="css/style.css">
+    <style>
+        .history-container {
+            padding: 20px;
+        }
+        .history-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        .history-actions {
+            display: flex;
+            gap: 10px;
+        }
+        .folder-section {
+            margin-bottom: 20px;
+        }
+        .folder-list {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        .folder-item {
+            padding: 8px 16px;
+            background: #f1f1f1;
+            border-radius: 20px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .folder-item.active {
+            background: #3498db;
+            color: white;
+        }
+        .folder-item:hover {
+            background: #e0e0e0;
+        }
+        .add-folder {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            padding: 8px 16px;
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 20px;
+            cursor: pointer;
+        }
+        .script-list {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        .script-item {
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .script-item:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.15);
+        }
+        .script-item-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .script-topic {
+            font-size: 18px;
+            font-weight: 500;
+            color: #333;
+        }
+        .script-time {
+            font-size: 12px;
+            color: #888;
+        }
+        .script-meta {
+            display: flex;
+            gap: 15px;
+            margin-top: 10px;
+            font-size: 14px;
+            color: #666;
+        }
+        .script-preview {
+            margin-top: 15px;
+            padding: 15px;
+            background: #f9f9f9;
+            border-radius: 8px;
+            font-size: 14px;
+            line-height: 1.5;
+            max-height: 100px;
+            overflow: hidden;
+            color: #666;
+        }
+        .script-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+        }
+        .script-actions button {
+            padding: 6px 12px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+        .btn-edit {
+            background: #3498db;
+            color: white;
+        }
+        .btn-refill {
+            background: #27ae60;
+            color: white;
+        }
+        .btn-delete {
+            background: #e74c3c;
+            color: white;
+        }
+        .btn-folder {
+            background: #f1f1f1;
+            color: #666;
+        }
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+        }
+        .modal-content {
+            background: white;
+            width: 80%;
+            max-width: 500px;
+            margin: 100px auto;
+            padding: 30px;
+            border-radius: 12px;
+        }
+        .modal-content input {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+        }
+        .modal-content button {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+        .empty-state {
+            text-align: center;
+            padding: 50px;
+            color: #888;
+        }
+        .guest-hint {
+            background: #fff5e6;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            color: #e67e22;
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar">
+        <div class="nav-brand">短视频脚本生成器</div>
+        <div class="nav-links">
+            <a href="create.html">脚本创作</a>
+            <a href="templates.html">模板库</a>
+            <a href="history.html" class="active">历史记录</a>
+            <a href="editor.html">编辑导出</a>
+        </div>
+        <div class="nav-user">
+            <span id="user-name"></span>
+            <button onclick="logout()" class="btn-logout">退出</button>
+        </div>
+    </nav>
+    
+    <div class="container">
+        <div class="history-container">
+            <div class="history-header">
+                <h2>历史脚本管理</h2>
+                <div class="history-actions">
+                    <button onclick="clearAllHistory()" class="btn-secondary">清空全部</button>
+                </div>
+            </div>
+            
+            <!-- 游客提示 -->
+            <div id="guest-hint" class="guest-hint" style="display: none;">
+                您当前为游客模式，脚本仅保存在本地浏览器。登录账号后可同步云端，在其他设备查看。
+            </div>
+            
+            <!-- 文件夹分类 -->
+            <div class="folder-section">
+                <h4>分类归档</h4>
+                <div class="folder-list" id="folder-list">
+                    <div class="folder-item active" onclick="filterByFolder(null)">全部</div>
+                </div>
+                <div class="add-folder" onclick="showAddFolderModal()">
+                    <span>+ 新建文件夹</span>
+                </div>
+            </div>
+            
+            <!-- 脚本列表 -->
+            <div class="script-list" id="script-list"></div>
+            
+            <div id="empty-state" class="empty-state" style="display: none;">
+                <p>暂无历史脚本</p>
+                <a href="create.html">去创作脚本</a>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 新建文件夹弹窗 -->
+    <div class="modal" id="folder-modal">
+        <div class="modal-content">
+            <h3>新建文件夹</h3>
+            <input type="text" id="folder-name" placeholder="请输入文件夹名称">
+            <button onclick="createFolder()" class="btn-primary">创建</button>
+            <button onclick="closeFolderModal()" class="btn-secondary">取消</button>
+        </div>
+    </div>
+    
+    <!-- 移动到文件夹弹窗 -->
+    <div class="modal" id="move-modal">
+        <div class="modal-content">
+            <h3>移动到文件夹</h3>
+            <select id="move-folder-select" style="width: 100%; padding: 10px; margin: 10px 0;">
+            </select>
+            <button onclick="moveToFolder()" class="btn-primary">移动</button>
+            <button onclick="closeMoveModal()" class="btn-secondary">取消</button>
+        </div>
+    </div>
+    
+    <div id="alert-container"></div>
+    
+    <script src="js/auth.js"></script>
+    <script>
+        let scripts = [];
+        let folders = [];
+        let currentFolder = null;
+        let currentScriptId = null;
+        
+        // 页面加载
+        document.addEventListener('DOMContentLoaded', async function() {
+            checkAuth();
+            await loadFolders();
+            await loadScripts();
+        });
+        
+        // 检查登录状态
+        function checkAuth() {
+            const userInfo = localStorage.getItem('user_info');
+            const isGuest = localStorage.getItem('is_guest');
+            
+            if (userInfo) {
+                const user = JSON.parse(userInfo);
+                document.getElementById('user-name').textContent = user.username;
+                document.getElementById('guest-hint').style.display = 'none';
+            } else if (isGuest === 'true') {
+                document.getElementById('user-name').textContent = '游客';
+                document.getElementById('guest-hint').style.display = 'block';
+            }
+        }
+        
+        // 加载文件夹
+        async function loadFolders() {
+            const token = getToken();
+            if (!token) {
+                // 游客模式从本地加载
+                folders = JSON.parse(localStorage.getItem('guest_folders') || '[]');
+                renderFolders();
+                return;
+            }
+            
+            try {
+                const response = await fetch(`${API_BASE_URL}/script/folders`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                const result = await response.json();
+                
+                if (result.code === 200) {
+                    folders = result.data;
+                    renderFolders();
+                }
+            } catch (error) {
+                console.error('加载文件夹失败:', error);
+            }
+        }
+        
+        // 加载脚本
+        async function loadScripts() {
+            const token = getToken();
+            if (!token) {
+                // 游客模式从本地加载
+                scripts = JSON.parse(localStorage.getItem('guest_scripts') || '[]');
+                renderScripts();
+                return;
+            }
+            
+            try {
+                const url = currentFolder ? `${API_BASE_URL}/script/list?folder_id=${currentFolder}` : `${API_BASE_URL}/script/list`;
+                const response = await fetch(url, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                const result = await response.json();
+                
+                if (result.code === 200) {
+                    scripts = result.data;
+                    renderScripts();
+                }
+            } catch (error) {
+                showAlert('加载脚本失败', 'error');
+            }
+        }
+        
+        // 渲染文件夹
+        function renderFolders() {
+            const folderList = document.getElementById('folder-list');
+            folderList.innerHTML = '<div class="folder-item active" onclick="filterByFolder(null)">全部</div>';
+            
+            folders.forEach(folder => {
+                const item = document.createElement('div');
+                item.className = 'folder-item';
+                if (currentFolder === folder.id) {
+                    item.classList.add('active');
+                    folderList.querySelector('.folder-item:first-child').classList.remove('active');
+                }
+                item.textContent = folder.name;
+                item.onclick = () => filterByFolder(folder.id);
+                
+                // 添加删除按钮
+                const deleteBtn = document.createElement('span');
+                deleteBtn.textContent = ' ×';
+                deleteBtn.style.color = '#e74c3c';
+                deleteBtn.onclick = (e) => {
+                    e.stopPropagation();
+                    deleteFolder(folder.id);
+                };
+                item.appendChild(deleteBtn);
+                
+                folderList.appendChild(item);
+            });
+        }
+        
+        // 渲染脚本
+        function renderScripts() {
+            const scriptList = document.getElementById('script-list');
+            scriptList.innerHTML = '';
+            
+            if (scripts.length === 0) {
+                document.getElementById('empty-state').style.display = 'block';
+                return;
+            }
+            
+            document.getElementById('empty-state').style.display = 'none';
+            
+            scripts.forEach(script => {
+                const item = document.createElement('div');
+                item.className = 'script-item';
+                
+                const time = new Date(script.created_at).toLocaleString('zh-CN');
+                
+                item.innerHTML = `
+                    <div class="script-item-header">
+                        <div class="script-topic">${script.topic}</div>
+                        <div class="script-time">${time}</div>
+                    </div>
+                    <div class="script-meta">
+                        <span>时长：${script.duration}</span>
+                        <span>风格：${script.style}</span>
+                        <span>字数：${script.word_count || script.script_content.length}</span>
+                    </div>
+                    <div class="script-preview">${script.script_content.substring(0, 150)}...</div>
+                    <div class="script-actions">
+                        <button onclick="editScript(${script.id})" class="btn-edit">编辑导出</button>
+                        <button onclick="refillScript(${script.id})" class="btn-refill">回填参数</button>
+                        <button onclick="showMoveModal(${script.id})" class="btn-folder">移动</button>
+                        <button onclick="deleteScript(${script.id})" class="btn-delete">删除</button>
+                    </div>
+                `;
+                
+                scriptList.appendChild(item);
+            });
+        }
+        
+        // 按文件夹筛选
+        function filterByFolder(folderId) {
+            currentFolder = folderId;
+            renderFolders();
+            loadScripts();
+        }
+        
+        // 显示新建文件夹弹窗
+        function showAddFolderModal() {
+            document.getElementById('folder-modal').style.display = 'block';
+        }
+        
+        function closeFolderModal() {
+            document.getElementById('folder-modal').style.display = 'none';
+            document.getElementById('folder-name').value = '';
+        }
+        
+        // 创建文件夹
+        async function createFolder() {
+            const name = document.getElementById('folder-name').value.trim();
+            if (!name) {
+                showAlert('请输入文件夹名称', 'error');
+                return;
+            }
+            
+            const token = getToken();
+            if (!token) {
+                // 游客模式保存到本地
+                folders.push({ id: Date.now(), name });
+                localStorage.setItem('guest_folders', JSON.stringify(folders));
+                renderFolders();
+                closeFolderModal();
+                showAlert('创建成功', 'success');
+                return;
+            }
+            
+            try {
+                const response = await fetch(`${API_BASE_URL}/script/folder`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ name })
+                });
+                const result = await response.json();
+                
+                if (result.code === 200) {
+                    folders.push(result.data);
+                    renderFolders();
+                    closeFolderModal();
+                    showAlert('创建成功', 'success');
+                } else {
+                    showAlert(result.message, 'error');
+                }
+            } catch (error) {
+                showAlert('创建失败', 'error');
+            }
+        }
+        
+        // 删除文件夹
+        async function deleteFolder(folderId) {
+            if (!confirm('确定删除该文件夹？')) return;
+            
+            const token = getToken();
+            if (!token) {
+                folders = folders.filter(f => f.id !== folderId);
+                localStorage.setItem('guest_folders', JSON.stringify(folders));
+                renderFolders();
+                showAlert('删除成功', 'success');
+                return;
+            }
+            
+            try {
+                const response = await fetch(`${API_BASE_URL}/script/folder/${folderId}`, {
+                    method: 'DELETE',
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                const result = await response.json();
+                
+                if (result.code === 200) {
+                    folders = folders.filter(f => f.id !== folderId);
+                    renderFolders();
+                    showAlert('删除成功', 'success');
+                }
+            } catch (error) {
+                showAlert('删除失败', 'error');
+            }
+        }
+        
+        // 显示移动弹窗
+        function showMoveModal(scriptId) {
+            currentScriptId = scriptId;
+            
+            const select = document.getElementById('move-folder-select');
+            select.innerHTML = '<option value="">不归类</option>';
+            folders.forEach(folder => {
+                select.innerHTML += `<option value="${folder.id}">${folder.name}</option>`;
+            });
+            
+            document.getElementById('move-modal').style.display = 'block';
+        }
+        
+        function closeMoveModal() {
+            document.getElementById('move-modal').style.display = 'none';
+            currentScriptId = null;
+        }
+        
+        // 移动到文件夹
+        async function moveToFolder() {
+            const folderId = document.getElementById('move-folder-select').value || null;
+            
+            const token = getToken();
+            if (!token) {
+                // 游客模式
+                const script = scripts.find(s => s.id === currentScriptId);
+                if (script) {
+                    script.folder_id = folderId;
+                    localStorage.setItem('guest_scripts', JSON.stringify(scripts));
+                }
+                closeMoveModal();
+                showAlert('移动成功', 'success');
+                return;
+            }
+            
+            try {
+                const response = await fetch(`${API_BASE_URL}/script/${currentScriptId}/folder`, {
+                    method: 'PUT',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ folder_id: folderId })
+                });
+                const result = await response.json();
+                
+                if (result.code === 200) {
+                    closeMoveModal();
+                    loadScripts();
+                    showAlert('移动成功', 'success');
+                }
+            } catch (error) {
+                showAlert('移动失败', 'error');
+            }
+        }
+        
+        // 编辑脚本
+        function editScript(scriptId) {
+            const script = scripts.find(s => s.id === scriptId);
+            if (script) {
+                localStorage.setItem('edit_script', JSON.stringify({
+                    id: script.id,
+                    topic: script.topic,
+                    content: script.script_content
+                }));
+                window.location.href = 'editor.html';
+            }
+        }
+        
+        // 回填参数
+        function refillScript(scriptId) {
+            const script = scripts.find(s => s.id === scriptId);
+            if (script) {
+                localStorage.setItem('script_draft', JSON.stringify({
+                    topic: script.topic,
+                    keywords: script.keywords,
+                    duration: script.duration,
+                    style: script.style
+                }));
+                window.location.href = 'create.html';
+            }
+        }
+        
+        // 删除脚本
+        async function deleteScript(scriptId) {
+            if (!confirm('确定删除该脚本？')) return;
+            
+            const token = getToken();
+            if (!token) {
+                scripts = scripts.filter(s => s.id !== scriptId);
+                localStorage.setItem('guest_scripts', JSON.stringify(scripts));
+                renderScripts();
+                showAlert('删除成功', 'success');
+                return;
+            }
+            
+            try {
+                const response = await fetch(`${API_BASE_URL}/script/${scriptId}`, {
+                    method: 'DELETE',
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                const result = await response.json();
+                
+                if (result.code === 200) {
+                    scripts = scripts.filter(s => s.id !== scriptId);
+                    renderScripts();
+                    showAlert('删除成功', 'success');
+                }
+            } catch (error) {
+                showAlert('删除失败', 'error');
+            }
+        }
+        
+        // 清空全部
+        async function clearAllHistory() {
+            if (!confirm('确定清空全部历史脚本？此操作不可恢复！')) return;
+            
+            const token = getToken();
+            if (!token) {
+                localStorage.removeItem('guest_scripts');
+                scripts = [];
+                renderScripts();
+                showAlert('已清空', 'success');
+                return;
+            }
+            
+            try {
+                const response = await fetch(`${API_BASE_URL}/script/all`, {
+                    method: 'DELETE',
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                const result = await response.json();
+                
+                if (result.code === 200) {
+                    scripts = [];
+                    renderScripts();
+                    showAlert('已清空', 'success');
+                }
+            } catch (error) {
+                showAlert('清空失败', 'error');
+            }
+        }
+        
+        // 退出登录
+        function logout() {
+            localStorage.removeItem('access_token');
+            localStorage.removeItem('user_info');
+            localStorage.removeItem('is_guest');
+            localStorage.removeItem('saved_username');
+            localStorage.removeItem('saved_password');
+            localStorage.removeItem('remember_checked');
+            window.location.href = 'login.html';
+        }
+    </script>
+</body>
+</html>

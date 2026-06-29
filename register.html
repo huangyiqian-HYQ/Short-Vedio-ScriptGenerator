@@ -1,0 +1,604 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>短视频脚本生成器 - 注册</title>
+    <link rel="stylesheet" href="css/style.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'PingFang SC', 'Microsoft YaHei', sans-serif;
+            overflow: hidden;
+            min-height: 100vh;
+        }
+        
+        .register-container {
+            display: flex;
+            height: 100vh;
+            position: relative;
+        }
+        
+        .bg-left {
+            flex: 1;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+            overflow: hidden;
+            color: white;
+        }
+        
+        .bg-left::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.05'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+        }
+        
+        .bg-decoration {
+            position: absolute;
+            width: 200px;
+            height: 200px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.1);
+            animation: float 6s ease-in-out infinite;
+        }
+        
+        .bg-decoration:nth-child(1) {
+            top: 10%;
+            left: 10%;
+            animation-delay: 0s;
+        }
+        
+        .bg-decoration:nth-child(2) {
+            bottom: 20%;
+            right: 15%;
+            animation-delay: 2s;
+            width: 150px;
+            height: 150px;
+        }
+        
+        .bg-decoration:nth-child(3) {
+            top: 50%;
+            left: 60%;
+            animation-delay: 4s;
+            width: 100px;
+            height: 100px;
+        }
+        
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-20px); }
+        }
+        
+        .brand-section {
+            z-index: 1;
+            text-align: center;
+            padding: 40px;
+        }
+        
+        .brand-icon {
+            width: 100px;
+            height: 100px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 24px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin: 0 auto 30px;
+            font-size: 48px;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        }
+        
+        .brand-title {
+            font-size: 36px;
+            font-weight: 700;
+            margin-bottom: 16px;
+            letter-spacing: 2px;
+        }
+        
+        .brand-desc {
+            font-size: 18px;
+            opacity: 0.9;
+            line-height: 1.6;
+            max-width: 400px;
+            margin: 0 auto;
+        }
+        
+        .feature-list {
+            margin-top: 40px;
+            display: flex;
+            gap: 30px;
+            justify-content: center;
+        }
+        
+        .feature-item {
+            text-align: center;
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            backdrop-filter: blur(5px);
+            min-width: 100px;
+        }
+        
+        .feature-icon {
+            font-size: 28px;
+            margin-bottom: 8px;
+        }
+        
+        .feature-text {
+            font-size: 14px;
+            opacity: 0.9;
+        }
+        
+        .form-right {
+            flex: 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: #f8fafc;
+            position: relative;
+        }
+        
+        .form-card {
+            background: white;
+            padding: 50px 40px;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.08);
+            width: 100%;
+            max-width: 420px;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .form-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, #667eea, #764ba2, #f093fb);
+        }
+        
+        .form-header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+        
+        .form-title {
+            font-size: 28px;
+            font-weight: 700;
+            color: #1e293b;
+            margin-bottom: 8px;
+        }
+        
+        .form-subtitle {
+            font-size: 14px;
+            color: #64748b;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+            position: relative;
+        }
+        
+        .form-group label {
+            display: block;
+            font-size: 14px;
+            font-weight: 500;
+            color: #475569;
+            margin-bottom: 8px;
+            transition: all 0.3s ease;
+        }
+        
+        .form-group.focused label {
+            color: #667eea;
+        }
+        
+        .input-wrapper {
+            position: relative;
+        }
+        
+        .input-icon {
+            position: absolute;
+            left: 16px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #94a3b8;
+            font-size: 18px;
+            transition: color 0.3s ease;
+        }
+        
+        .form-group.focused .input-icon {
+            color: #667eea;
+        }
+        
+        .form-group input {
+            width: 100%;
+            padding: 14px 16px 14px 50px;
+            border: 2px solid #e2e8f0;
+            border-radius: 12px;
+            font-size: 15px;
+            color: #1e293b;
+            background: #f8fafc;
+            transition: all 0.3s ease;
+            outline: none;
+        }
+        
+        .form-group input:focus {
+            border-color: #667eea;
+            background: white;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+        
+        .form-group input::placeholder {
+            color: #94a3b8;
+        }
+        
+        .password-rules {
+            font-size: 12px;
+            color: #94a3b8;
+            margin-top: 6px;
+            line-height: 1.5;
+        }
+        
+        .rule-item {
+            display: flex;
+            align-items: center;
+            margin: 3px 0;
+            transition: color 0.3s ease;
+        }
+        
+        .rule-item.valid {
+            color: #22c55e;
+        }
+        
+        .rule-item.invalid {
+            color: #ef4444;
+        }
+        
+        .rule-item::before {
+            content: '•';
+            margin-right: 5px;
+        }
+        
+        .password-error {
+            color: #ef4444;
+            font-size: 12px;
+            margin-top: 6px;
+            display: none;
+        }
+        
+        .btn-primary {
+            width: 100%;
+            padding: 15px;
+            border: none;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            position: relative;
+            overflow: hidden;
+            margin-top: 10px;
+        }
+        
+        .btn-primary::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            transition: left 0.5s ease;
+        }
+        
+        .btn-primary:hover::before {
+            left: 100%;
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(102, 126, 234, 0.4);
+        }
+        
+        .btn-primary:active {
+            transform: translateY(0);
+        }
+        
+        .auth-link {
+            text-align: center;
+            margin-top: 24px;
+            font-size: 14px;
+            color: #64748b;
+        }
+        
+        .auth-link a {
+            color: #667eea;
+            text-decoration: none;
+            font-weight: 500;
+            transition: color 0.3s ease;
+        }
+        
+        .auth-link a:hover {
+            color: #764ba2;
+        }
+        
+        #alert-container {
+            margin-top: 20px;
+        }
+        
+        .alert {
+            padding: 12px 16px;
+            border-radius: 8px;
+            font-size: 14px;
+            margin-bottom: 12px;
+            animation: slideIn 0.3s ease;
+        }
+        
+        .alert-success {
+            background: #dcfce7;
+            color: #16a34a;
+        }
+        
+        .alert-error {
+            background: #fee2e2;
+            color: #dc2626;
+        }
+        
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        @media (max-width: 768px) {
+            .register-container {
+                flex-direction: column;
+            }
+            
+            .bg-left {
+                padding: 40px 20px;
+                min-height: 40vh;
+            }
+            
+            .brand-title {
+                font-size: 28px;
+            }
+            
+            .brand-desc {
+                font-size: 15px;
+            }
+            
+            .feature-list {
+                gap: 15px;
+            }
+            
+            .feature-item {
+                min-width: 80px;
+                padding: 15px;
+            }
+            
+            .form-card {
+                padding: 30px 25px;
+                margin: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="register-container">
+        <div class="bg-left">
+            <div class="bg-decoration"></div>
+            <div class="bg-decoration"></div>
+            <div class="bg-decoration"></div>
+            
+            <div class="brand-section">
+                <div class="brand-icon">🎬</div>
+                <h1 class="brand-title">短视频脚本生成器</h1>
+                <p class="brand-desc">智能创作，一键生成专业短视频脚本<br>让你的创意轻松落地</p>
+                
+                <div class="feature-list">
+                    <div class="feature-item">
+                        <div class="feature-icon">✨</div>
+                        <div class="feature-text">智能生成</div>
+                    </div>
+                    <div class="feature-item">
+                        <div class="feature-icon">🎨</div>
+                        <div class="feature-text">多样模板</div>
+                    </div>
+                    <div class="feature-item">
+                        <div class="feature-icon">⚡</div>
+                        <div class="feature-text">高效便捷</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="form-right">
+            <div class="form-card">
+                <div class="form-header">
+                    <h2 class="form-title">创建账号</h2>
+                    <p class="form-subtitle">开启你的创意之旅</p>
+                </div>
+                
+                <form id="register-form">
+                    <div class="form-group">
+                        <label for="username">用户名</label>
+                        <div class="input-wrapper">
+                            <span class="input-icon">👤</span>
+                            <input type="text" id="username" name="username" required placeholder="请输入用户名">
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="email">邮箱</label>
+                        <div class="input-wrapper">
+                            <span class="input-icon">📧</span>
+                            <input type="email" id="email" name="email" required placeholder="请输入邮箱地址">
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="password">密码</label>
+                        <div class="input-wrapper">
+                            <span class="input-icon">🔒</span>
+                            <input type="password" id="password" name="password" required placeholder="请输入密码">
+                        </div>
+                        <div class="password-rules">
+                            <div class="rule-item" id="rule-length">密码长度6-20位</div>
+                            <div class="rule-item" id="rule-letter">包含至少一个字母</div>
+                            <div class="rule-item" id="rule-number">包含至少一个数字</div>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="confirm-password">确认密码</label>
+                        <div class="input-wrapper">
+                            <span class="input-icon">🔑</span>
+                            <input type="password" id="confirm-password" name="confirm-password" required placeholder="请再次输入密码">
+                        </div>
+                        <div class="password-error" id="confirm-error">两次密码输入不一致</div>
+                    </div>
+                    
+                    <button type="submit" class="btn-primary">注册</button>
+                    
+                    <p class="auth-link">
+                        已有账号？<a href="login.html">立即登录</a>
+                    </p>
+                </form>
+                
+                <div id="alert-container"></div>
+            </div>
+        </div>
+    </div>
+    
+    <script src="js/auth.js"></script>
+    <script>
+        const passwordInput = document.getElementById('password');
+        const confirmPasswordInput = document.getElementById('confirm-password');
+        
+        passwordInput.addEventListener('input', function() {
+            const password = this.value;
+            
+            const lengthRule = document.getElementById('rule-length');
+            if (password.length >= 6 && password.length <= 20) {
+                lengthRule.classList.add('valid');
+                lengthRule.classList.remove('invalid');
+            } else {
+                lengthRule.classList.add('invalid');
+                lengthRule.classList.remove('valid');
+            }
+            
+            const letterRule = document.getElementById('rule-letter');
+            if (/[a-zA-Z]/.test(password)) {
+                letterRule.classList.add('valid');
+                letterRule.classList.remove('invalid');
+            } else {
+                letterRule.classList.add('invalid');
+                letterRule.classList.remove('valid');
+            }
+            
+            const numberRule = document.getElementById('rule-number');
+            if (/[0-9]/.test(password)) {
+                numberRule.classList.add('valid');
+                numberRule.classList.remove('invalid');
+            } else {
+                numberRule.classList.add('invalid');
+                numberRule.classList.remove('valid');
+            }
+            
+            checkConfirmPassword();
+        });
+        
+        confirmPasswordInput.addEventListener('input', checkConfirmPassword);
+        
+        function checkConfirmPassword() {
+            const password = passwordInput.value;
+            const confirmPassword = confirmPasswordInput.value;
+            const confirmError = document.getElementById('confirm-error');
+            
+            if (confirmPassword && password !== confirmPassword) {
+                confirmError.style.display = 'block';
+            } else {
+                confirmError.style.display = 'none';
+            }
+        }
+        
+        const inputs = document.querySelectorAll('.form-group input');
+        inputs.forEach(input => {
+            input.addEventListener('focus', function() {
+                this.parentElement.parentElement.classList.add('focused');
+            });
+            input.addEventListener('blur', function() {
+                this.parentElement.parentElement.classList.remove('focused');
+            });
+        });
+        
+        document.getElementById('register-form').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const username = document.getElementById('username').value;
+            const email = document.getElementById('email').value;
+            const password = passwordInput.value;
+            const confirmPassword = confirmPasswordInput.value;
+            
+            if (password.length < 6 || password.length > 20) {
+                showAlert('密码长度需为6-20位', 'error');
+                return;
+            }
+            
+            if (!/[a-zA-Z]/.test(password)) {
+                showAlert('密码需包含至少一个字母', 'error');
+                return;
+            }
+            
+            if (!/[0-9]/.test(password)) {
+                showAlert('密码需包含至少一个数字', 'error');
+                return;
+            }
+            
+            if (password !== confirmPassword) {
+                showAlert('两次密码输入不一致', 'error');
+                return;
+            }
+            
+            try {
+                const response = await fetch(`${API_BASE_URL}/user/register`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username, email, password })
+                });
+                
+                const result = await response.json();
+                
+                if (result.code === 200) {
+                    showAlert('注册成功，请登录', 'success');
+                    setTimeout(() => {
+                        window.location.href = 'login.html';
+                    }, 1500);
+                } else {
+                    showAlert(result.message, 'error');
+                }
+            } catch (error) {
+                showAlert('注册失败，请检查网络连接', 'error');
+            }
+        });
+    </script>
+</body>
+</html>

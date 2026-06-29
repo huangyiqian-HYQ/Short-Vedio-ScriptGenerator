@@ -1,0 +1,1290 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>短视频脚本生成器 - 脚本创作</title>
+    <link rel="stylesheet" href="css/style.css">
+    <style>
+        .create-container {
+            display: grid;
+            grid-template-columns: 350px 1fr;
+            gap: 20px;
+            padding: 20px;
+        }
+        .input-section {
+            background: white;
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .result-section {
+            background: white;
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: #333;
+        }
+        .form-group input, .form-group textarea, .form-group select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 14px;
+        }
+        .form-group textarea {
+            resize: vertical;
+            min-height: 80px;
+        }
+        .input-hint {
+            font-size: 12px;
+            color: #888;
+            margin-top: 5px;
+        }
+        .input-error {
+            font-size: 12px;
+            color: #e74c3c;
+            margin-top: 5px;
+            display: none;
+        }
+        .btn-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+        }
+        .btn-group button {
+            flex: 1;
+            padding: 10px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        .btn-secondary {
+            background: #f1f1f1;
+            color: #666;
+        }
+        .btn-secondary:hover {
+            background: #e0e0e0;
+        }
+        .loading-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(255,255,255,0.9);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+        }
+        .loading-spinner {
+            width: 50px;
+            height: 50px;
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #3498db;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .loading-text {
+            margin-top: 15px;
+            color: #666;
+        }
+        .script-result {
+            margin-top: 20px;
+            padding: 20px;
+            background: #f9f9f9;
+            border-radius: 8px;
+            white-space: pre-wrap;
+            line-height: 1.8;
+        }
+        .script-result.sensitive {
+            background: #fff5f5;
+        }
+        .sensitive-word {
+            background: #ff6b6b;
+            color: white;
+            padding: 2px 4px;
+            border-radius: 3px;
+        }
+        .word-count {
+            text-align: right;
+            color: #888;
+            font-size: 14px;
+            margin-top: 10px;
+        }
+        .script-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+            flex-wrap: wrap;
+        }
+        .script-actions button {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        .version-tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+        .version-tab {
+            padding: 8px 20px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            cursor: pointer;
+            background: white;
+        }
+        .version-tab.active {
+            background: #3498db;
+            color: white;
+            border-color: #3498db;
+        }
+        .template-badge {
+            display: inline-block;
+            background: #e8f4fd;
+            color: #2196F3;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            margin-bottom: 15px;
+        }
+        .segment-copy {
+            display: flex;
+            align-items: center;
+            margin: 10px 0;
+            padding: 10px;
+            background: white;
+            border-radius: 6px;
+        }
+        .segment-copy p {
+            flex: 1;
+            margin: 0;
+        }
+        .segment-copy button {
+            padding: 5px 10px;
+            background: #3498db;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar">
+        <div class="nav-brand">短视频脚本生成器</div>
+        <div class="nav-links">
+            <a href="create.html" class="active">脚本创作</a>
+            <a href="templates.html">模板库</a>
+            <a href="history.html">历史记录</a>
+            <a href="editor.html">编辑导出</a>
+        </div>
+        <div class="nav-user">
+            <span id="user-name"></span>
+            <button onclick="logout()" class="btn-logout">退出</button>
+        </div>
+    </nav>
+    
+    <div class="container">
+        <div class="create-container">
+            <!-- 输入区 -->
+            <div class="input-section">
+                <h3>创作参数</h3>
+                
+                <!-- 模板提示 -->
+                <div id="template-badge" class="template-badge" style="display: none;"></div>
+                
+                <form id="create-form">
+                    <div class="form-group">
+                        <label for="topic">主题 *</label>
+                        <input type="text" id="topic" name="topic" placeholder="请输入视频主题" maxlength="50">
+                        <div class="input-hint">最多50字</div>
+                        <div class="input-error" id="topic-error">请填写主题</div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="keywords">关键词 *</label>
+                        <input type="text" id="keywords" name="keywords" placeholder="请输入关键词，用逗号或空格分隔" maxlength="100">
+                        <div class="input-hint">至少填写2个关键词，用逗号或空格分隔</div>
+                        <div class="input-error" id="keywords-error">请至少填写2个关键词</div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="duration">时长</label>
+                        <select id="duration" name="duration">
+                            <option value="15s">15秒</option>
+                            <option value="30s" selected>30秒</option>
+                            <option value="60s">60秒</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="style">文案风格</label>
+                        <select id="style" name="style">
+                            <option value="口语日常">口语日常</option>
+                            <option value="爆款短句">爆款短句</option>
+                            <option value="专业科普">专业科普</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="template-select">参考模板（可选）</label>
+                        <select id="template-select" name="template-select">
+                            <option value="">不使用模板</option>
+                        </select>
+                        <div class="input-hint">选择一个模板作为参考，脚本将结合模板风格生成</div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="word-limit">字数限制</label>
+                        <input type="number" id="word-limit" name="word-limit" placeholder="不限制请留空" min="0" max="5000">
+                        <div class="input-hint">适配15s/30s/60s短视频，建议字数：15s约50字，30s约100字，60s约200字</div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>
+                            <input type="checkbox" id="generate-dual"> 同时生成第二版本
+                        </label>
+                    </div>
+                    
+                    <div class="btn-group">
+                        <button type="submit" class="btn-primary" id="generate-btn">生成脚本</button>
+                        <button type="button" class="btn-secondary" onclick="randomFill()">随机填充</button>
+                        <button type="button" class="btn-secondary" onclick="resetForm()">重置</button>
+                    </div>
+                </form>
+                
+                <div style="margin-top: 20px; padding-top: 20px; border-top: 1px solid #eee;">
+                    <h4>草稿自动保存</h4>
+                    <p style="font-size: 12px; color: #888;">您填写的内容会自动保存到本地，刷新页面不会丢失</p>
+                    <button onclick="clearDraft()" class="btn-secondary" style="width: 100%; margin-top: 10px;">清除草稿</button>
+                </div>
+            </div>
+            
+            <!-- 结果区 -->
+            <div class="result-section">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <h3>生成结果</h3>
+                    <div id="word-count" class="word-count" style="display: none;">
+                        字数统计：<span id="total-words">0</span> 字
+                    </div>
+                </div>
+                
+                <!-- 版本切换 -->
+                <div class="version-tabs" id="version-tabs" style="display: none;">
+                    <div class="version-tab active" onclick="switchVersion(1)">版本一</div>
+                    <div class="version-tab" onclick="switchVersion(2)">版本二</div>
+                </div>
+                
+                <div id="result-placeholder" style="text-align: center; padding: 50px; color: #888;">
+                    填写参数后点击"生成脚本"按钮
+                </div>
+                
+                <div id="script-result" class="script-result" style="display: none;"></div>
+                
+                <!-- 分段复制 -->
+                <div id="segment-section" style="display: none; margin-top: 20px;">
+                    <h4>分段复制</h4>
+                    <div id="segment-list"></div>
+                </div>
+                
+                <!-- 敏感词提示 -->
+                <div id="sensitive-section" style="display: none; margin-top: 15px; padding: 10px; background: #fff5f5; border-radius: 6px;">
+                    <p style="color: #e74c3c; font-size: 14px;">
+                        <strong>检测到敏感词：</strong><span id="sensitive-words"></span>
+                    </p>
+                </div>
+                
+                <!-- 操作按钮 -->
+                <div class="script-actions" id="script-actions" style="display: none;">
+                    <button onclick="polishScript('general')" class="btn-primary">润色文案</button>
+                    <button onclick="polishScript('concise')" class="btn-secondary">精简文案</button>
+                    <button onclick="polishScript('detailed')" class="btn-secondary">扩展文案</button>
+                    <button onclick="formatScript()" class="btn-secondary">自动排版</button>
+                    <button onclick="detectSensitive()" class="btn-secondary">敏感词检测</button>
+                    <button onclick="saveScript()" class="btn-primary">保存脚本</button>
+                    <button onclick="goToEditor()" class="btn-secondary">编辑导出</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 加载动画 -->
+    <div class="loading-overlay" id="loading-overlay">
+        <div class="loading-spinner"></div>
+        <div class="loading-text">AI正在创作中，请稍候...</div>
+    </div>
+    
+    <div id="alert-container"></div>
+    
+    <script src="js/auth.js"></script>
+    <script>
+        let scriptContent = '';
+        let scriptContentV2 = '';
+        let currentVersion = 1;
+        let selectedTemplate = null;
+        
+        // 页面加载
+        document.addEventListener('DOMContentLoaded', function() {
+            checkAuth();
+            loadDraft();
+            loadSelectedTemplate();
+            loadTemplateOptions();
+        });
+        
+        // 加载模板选项到下拉框
+        async function loadTemplateOptions() {
+            const templateSelect = document.getElementById('template-select');
+            
+            try {
+                const response = await fetch(`${API_BASE_URL}/template/list`);
+                const result = await response.json();
+                
+                if (result.code === 200) {
+                    result.data.forEach(template => {
+                        const option = document.createElement('option');
+                        option.value = template.id;
+                        option.textContent = `${template.name} (${template.category})`;
+                        option.dataset.template = JSON.stringify(template);
+                        templateSelect.appendChild(option);
+                    });
+                }
+            } catch (error) {
+                // API不可用，加载本地模板
+                const localTemplates = [
+                    { id: 1, name: '美食教程类', category: '教程类' },
+                    { id: 2, name: '知识科普类', category: '科普类' },
+                    { id: 3, name: '产品展示类', category: '种草类' },
+                    { id: 4, name: '搞笑剧情类', category: '剧情类' },
+                    { id: 5, name: '生活技巧类', category: '实用类' },
+                    { id: 6, name: '时尚穿搭类', category: '时尚类' },
+                    { id: 7, name: '旅行vlog类', category: '旅行类' },
+                    { id: 8, name: '职场技能类', category: '职场类' },
+                    { id: 9, name: '健身运动类', category: '健身类' },
+                    { id: 10, name: '萌宠可爱类', category: '宠物类' }
+                ];
+                
+                localTemplates.forEach(template => {
+                    const option = document.createElement('option');
+                    option.value = template.id;
+                    option.textContent = `${template.name} (${template.category})`;
+                    templateSelect.appendChild(option);
+                });
+            }
+        }
+        
+        // 检查登录状态
+        function checkAuth() {
+            const userInfo = localStorage.getItem('user_info');
+            const isGuest = localStorage.getItem('is_guest');
+            
+            if (userInfo) {
+                const user = JSON.parse(userInfo);
+                document.getElementById('user-name').textContent = user.username;
+            } else if (isGuest === 'true') {
+                document.getElementById('user-name').textContent = '游客';
+            }
+        }
+        
+        // 加载选中的模板
+        function loadSelectedTemplate() {
+            const templateStr = localStorage.getItem('selected_template');
+            if (templateStr) {
+                selectedTemplate = JSON.parse(templateStr);
+                const badge = document.getElementById('template-badge');
+                badge.textContent = `已选择模板：${selectedTemplate.name}`;
+                badge.style.display = 'inline-block';
+                localStorage.removeItem('selected_template');
+            }
+        }
+        
+        // 草稿自动保存
+        const topicInput = document.getElementById('topic');
+        const keywordsInput = document.getElementById('keywords');
+        const durationSelect = document.getElementById('duration');
+        const styleSelect = document.getElementById('style');
+        const wordLimitInput = document.getElementById('word-limit');
+        const generateDualCheckbox = document.getElementById('generate-dual');
+        
+        [topicInput, keywordsInput, wordLimitInput].forEach(input => {
+            input.addEventListener('input', saveDraft);
+        });
+        [durationSelect, styleSelect].forEach(select => {
+            select.addEventListener('change', saveDraft);
+        });
+        generateDualCheckbox.addEventListener('change', saveDraft);
+        
+        function saveDraft() {
+            const draft = {
+                topic: topicInput.value,
+                keywords: keywordsInput.value,
+                duration: durationSelect.value,
+                style: styleSelect.value,
+                wordLimit: wordLimitInput.value,
+                generateDual: generateDualCheckbox.checked
+            };
+            localStorage.setItem('script_draft', JSON.stringify(draft));
+        }
+        
+        function loadDraft() {
+            const draftStr = localStorage.getItem('script_draft');
+            if (draftStr) {
+                const draft = JSON.parse(draftStr);
+                topicInput.value = draft.topic || '';
+                keywordsInput.value = draft.keywords || '';
+                durationSelect.value = draft.duration || '30s';
+                styleSelect.value = draft.style || '口语日常';
+                wordLimitInput.value = draft.wordLimit || '';
+                generateDualCheckbox.checked = draft.generateDual || false;
+            }
+        }
+        
+        function clearDraft() {
+            localStorage.removeItem('script_draft');
+            resetForm();
+            showAlert('草稿已清除', 'success');
+        }
+        
+        // 随机填充
+        function randomFill() {
+            const topics = ['夏日护肤技巧', '美食探店推荐', '职场穿搭指南', '健身减肥方法', '旅行攻略分享'];
+            const keywordPairs = [
+                ['防晒', '保湿'],
+                ['美味', '实惠'],
+                ['时尚', '舒适'],
+                ['燃脂', '塑形'],
+                ['风景', '美食']
+            ];
+            
+            const randomIndex = Math.floor(Math.random() * topics.length);
+            topicInput.value = topics[randomIndex];
+            keywordsInput.value = keywordPairs[randomIndex].join(', ');
+            
+            saveDraft();
+            showAlert('已随机填充内容', 'success');
+        }
+        
+        // 重置表单
+        function resetForm() {
+            document.getElementById('create-form').reset();
+            document.getElementById('topic-error').style.display = 'none';
+            document.getElementById('keywords-error').style.display = 'none';
+            localStorage.removeItem('script_draft');
+            selectedTemplate = null;
+            document.getElementById('template-badge').style.display = 'none';
+        }
+        
+        // 表单提交
+        document.getElementById('create-form').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const topic = topicInput.value.trim();
+            const keywords = keywordsInput.value.trim();
+            
+            // 校验主题
+            if (!topic) {
+                document.getElementById('topic-error').style.display = 'block';
+                return;
+            } else {
+                document.getElementById('topic-error').style.display = 'none';
+            }
+            
+            // 校验关键词（支持逗号和空格分隔）
+            const keywordsList = keywords.split(/[,，\s]+/).filter(k => k.trim());
+            if (keywordsList.length < 2) {
+                document.getElementById('keywords-error').style.display = 'block';
+                return;
+            } else {
+                document.getElementById('keywords-error').style.display = 'none';
+            }
+            
+            // 显示加载动画
+            document.getElementById('loading-overlay').style.display = 'flex';
+            
+            const duration = durationSelect.value;
+            const style = styleSelect.value;
+            const wordLimit = parseInt(wordLimitInput.value) || 0;
+            const generateDual = generateDualCheckbox.checked;
+            
+            try {
+                const token = getToken();
+                const headers = { 'Content-Type': 'application/json' };
+                if (token) {
+                    headers['Authorization'] = `Bearer ${token}`;
+                }
+                
+                const response = await fetch(`${API_BASE_URL}/script/generate`, {
+                    method: 'POST',
+                    headers: headers,
+                    body: JSON.stringify({
+                        topic,
+                        keywords: keywordsList,
+                        duration,
+                        style,
+                        word_limit: wordLimit,
+                        generate_dual: generateDual,
+                        template_id: selectedTemplate ? selectedTemplate.id : null
+                    })
+                });
+                
+                const result = await response.json();
+                
+                if (result.code === 200) {
+                    scriptContent = result.data.script_content;
+                    scriptContentV2 = result.data.script_content_v2 || '';
+                    
+                    displayScript(scriptContent);
+                    
+                    if (scriptContentV2) {
+                        document.getElementById('version-tabs').style.display = 'flex';
+                    }
+                    
+                    document.getElementById('result-placeholder').style.display = 'none';
+                    document.getElementById('script-result').style.display = 'block';
+                    document.getElementById('script-actions').style.display = 'flex';
+                    document.getElementById('word-count').style.display = 'block';
+                    
+                    updateWordCount();
+                    parseSegments();
+                    
+                    showAlert('脚本生成成功', 'success');
+                } else {
+                    showAlert(result.message, 'error');
+                    const selectedTemplateId = document.getElementById('template-select').value;
+                    const mockScript = generateMockScript(topic, keywordsList, duration, style, selectedTemplateId);
+                    scriptContent = mockScript;
+                    scriptContentV2 = '';
+                    
+                    displayScript(mockScript);
+                    document.getElementById('result-placeholder').style.display = 'none';
+                    document.getElementById('script-result').style.display = 'block';
+                    document.getElementById('script-actions').style.display = 'flex';
+                    document.getElementById('word-count').style.display = 'block';
+                    updateWordCount();
+                    parseSegments();
+                    
+                    showAlert('后端服务异常，已使用本地模拟数据生成脚本', 'warning');
+                }
+            } catch (error) {
+                console.error('生成脚本失败:', error);
+                const selectedTemplateId = document.getElementById('template-select').value;
+                const mockScript = generateMockScript(topic, keywordsList, duration, style, selectedTemplateId);
+                scriptContent = mockScript;
+                scriptContentV2 = '';
+                
+                displayScript(mockScript);
+                document.getElementById('result-placeholder').style.display = 'none';
+                document.getElementById('script-result').style.display = 'block';
+                document.getElementById('script-actions').style.display = 'flex';
+                document.getElementById('word-count').style.display = 'block';
+                updateWordCount();
+                parseSegments();
+                
+                showAlert('网络连接异常，已使用本地模拟数据生成脚本', 'warning');
+            } finally {
+                document.getElementById('loading-overlay').style.display = 'none';
+            }
+        });
+        
+        function generateMockScript(topic, keywords, duration, style, templateId) {
+            const keywordsList = Array.isArray(keywords) ? keywords : keywords.split(/[,，\s]+/).filter(k => k.trim());
+            const kw1 = keywordsList[0] || '';
+            const kw2 = keywordsList[1] || '';
+            const kw3 = keywordsList[2] || '';
+            
+            // 模板类别映射
+            const templateCategoryMap = {
+                '1': '教程',  // 美食教程类
+                '2': '科普',  // 知识科普类
+                '3': '种草',  // 产品展示类
+                '4': '剧情',  // 搞笑剧情类
+                '5': '实用',  // 生活技巧类
+                '6': '时尚',  // 时尚穿搭类
+                '7': '旅行',  // 旅行vlog类
+                '8': '职场',  // 职场技能类
+                '9': '健身',  // 健身运动类
+                '10': '萌宠'  // 萌宠可爱类
+            };
+            
+            const templateCategory = templateId ? templateCategoryMap[templateId] || '' : '';
+            
+            // 根据主题生成相关的场景、动作、台词内容（结合模板类别）
+            function getSceneByTopic(topic) {
+                // 增强的主题映射，结合模板类别
+                const topicEnhancedMap = {
+                    '红烧肉': { 
+                        base: { scene: '厨房', action: '炒糖色、炖煮', result: '色泽红亮、入口即化', prop: '五花肉、冰糖、老抽' },
+                        '教程': { scene: '厨房', action: '切肉、焯水、炒糖、炖煮', result: '色泽红亮、肥而不腻', prop: '五花肉、冰糖、老抽、料酒' },
+                        '科普': { scene: '厨房/实验室', action: '分析、讲解', result: '专业解析、科学烹饪', prop: '食材、调料、烹饪理论' }
+                    },
+                    '家常菜': { 
+                        base: { scene: '厨房', action: '切配、翻炒', result: '色香味俱全', prop: '时令蔬菜、新鲜食材' },
+                        '教程': { scene: '厨房', action: '备料、切菜、调味', result: '家常美味、口感鲜嫩', prop: '蔬菜、肉类、调料' },
+                        '种草': { scene: '餐厅/厨房', action: '品尝、评价', result: '推荐种草、好吃不贵', prop: '菜品、餐具、环境' }
+                    },
+                    '穿搭': { 
+                        base: { scene: '衣帽间/试衣间', action: '搭配、试穿', result: '时尚大方、气质提升', prop: '服装、配饰、镜子' },
+                        '时尚': { scene: '试衣间/街头', action: '挑选、搭配、展示', result: '时尚潮流、个性十足', prop: '衣服、鞋子、包包、首饰' },
+                        '剧情': { scene: '商场/街头', action: '闺蜜逛街、挑选衣服', result: '纠结选择、最终满意', prop: '各种衣服、镜子、购物袋' }
+                    },
+                    '护肤': { 
+                        base: { scene: '梳妆台/浴室', action: '清洁、涂抹', result: '肌肤水润、光泽透亮', prop: '护肤品、化妆棉' },
+                        '种草': { scene: '梳妆台/浴室', action: '展示、使用、评价', result: '种草推荐、效果显著', prop: '护肤品、面膜、美容仪' },
+                        '科普': { scene: '梳妆台/专业场所', action: '成分分析、原理讲解', result: '科学护肤、专业可信', prop: '护肤品、成分表、实验器材' }
+                    },
+                    '健身': { 
+                        base: { scene: '健身房/户外', action: '拉伸、训练', result: '体态改善、精力充沛', prop: '瑜伽垫、哑铃' },
+                        '教程': { scene: '健身房/居家', action: '动作示范、要点讲解', result: '动作标准、效果明显', prop: '瑜伽垫、哑铃、弹力带' },
+                        '健身': { scene: '健身房/户外', action: '热身、训练、拉伸', result: '燃脂塑形、体态优美', prop: '健身器材、运动服、水杯' }
+                    },
+                    '职场': { 
+                        base: { scene: '办公室/会议室', action: '演示、沟通', result: '效率提升、升职加薪', prop: '电脑、笔记本' },
+                        '职场': { scene: '办公室/会议室', action: '工作演示、沟通协作', result: '表现优秀、获得认可', prop: '电脑、文件夹、演示文稿' },
+                        '剧情': { scene: '办公室/茶水间', action: '职场日常、人际互动', result: '职场生存、技能提升', prop: '办公桌、咖啡机、同事' }
+                    },
+                    '学习': { 
+                        base: { scene: '书房/图书馆', action: '阅读、笔记', result: '知识掌握、考试高分', prop: '书籍、文具' },
+                        '教程': { scene: '书房/教室', action: '学习方法、技巧讲解', result: '效率提升、成绩进步', prop: '书本、笔记本、学习资料' },
+                        '科普': { scene: '图书馆/自习室', action: '知识讲解、案例分析', result: '知识拓展、视野开阔', prop: '参考书、资料、电脑' }
+                    },
+                    '旅行': { 
+                        base: { scene: '景区/街头', action: '打卡、体验', result: '收获满满、难忘回忆', prop: '相机、行李' },
+                        '旅行': { scene: '景区/酒店/餐厅', action: '游览、美食、住宿', result: '攻略实用、玩得开心', prop: '相机、行李箱、地图' },
+                        '剧情': { scene: '机场/车站/景点', action: '出发、到达、游玩', result: '旅途趣事、美好回忆', prop: '行李、相机、纪念品' }
+                    },
+                    '理财': { 
+                        base: { scene: '书房/咖啡厅', action: '分析、规划', result: '财富增长、财务自由', prop: '计算器、报表' },
+                        '科普': { scene: '办公室/理财室', action: '数据分析、风险评估', result: '专业可靠、收益可观', prop: '电脑、报表、理财工具' },
+                        '职场': { scene: '办公室', action: '工作场景、理财建议', result: '财富管理、生活改善', prop: '电脑、账本、咖啡' }
+                    },
+                    '摄影': { 
+                        base: { scene: '户外/影棚', action: '构图、拍摄', result: '大片质感、朋友圈爆款', prop: '相机、三脚架' },
+                        '教程': { scene: '户外/室内', action: '拍摄演示、技巧讲解', result: '摄影技巧、快速提升', prop: '相机、镜头、补光灯' },
+                        '时尚': { scene: '外景/影棚', action: '人像拍摄、后期处理', result: '人像大片、惊艳朋友圈', prop: '相机、反光板、化妆品' }
+                    }
+                };
+                
+                // 获取增强配置
+                const topicConfig = topicEnhancedMap[topic];
+                if (topicConfig && templateCategory && topicConfig[templateCategory]) {
+                    return topicConfig[templateCategory];
+                } else if (topicConfig) {
+                    return topicConfig.base;
+                }
+                
+                // 通用映射
+                const topicMap = {
+                    '红烧肉': { scene: '厨房', action: '炒糖色、炖煮', result: '色泽红亮、入口即化', prop: '五花肉、冰糖、老抽' },
+                    '家常菜': { scene: '厨房', action: '切配、翻炒', result: '色香味俱全', prop: '时令蔬菜、新鲜食材' },
+                    '穿搭': { scene: '衣帽间/试衣间', action: '搭配、试穿', result: '时尚大方、气质提升', prop: '服装、配饰、镜子' },
+                    '护肤': { scene: '梳妆台/浴室', action: '清洁、涂抹', result: '肌肤水润、光泽透亮', prop: '护肤品、化妆棉' },
+                    '健身': { scene: '健身房/户外', action: '拉伸、训练', result: '体态改善、精力充沛', prop: '瑜伽垫、哑铃' },
+                    '职场': { scene: '办公室/会议室', action: '演示、沟通', result: '效率提升、升职加薪', prop: '电脑、笔记本' },
+                    '学习': { scene: '书房/图书馆', action: '阅读、笔记', result: '知识掌握、考试高分', prop: '书籍、文具' },
+                    '旅行': { scene: '景区/街头', action: '打卡、体验', result: '收获满满、难忘回忆', prop: '相机、行李' },
+                    '理财': { scene: '书房/咖啡厅', action: '分析、规划', result: '财富增长、财务自由', prop: '计算器、报表' },
+                    '摄影': { scene: '户外/影棚', action: '构图、拍摄', result: '大片质感、朋友圈爆款', prop: '相机、三脚架' }
+                };
+                return topicMap[topic] || { scene: '生活场景', action: '操作、演示', result: '效果显著、超出预期', prop: '相关材料、工具' };
+            }
+            
+            // 根据文案风格和模板类别生成不同风格的台词
+            function getDialogue(type, topic, kw1, kw2, scene) {
+                // 基础台词库
+                const dialogues = {
+                    '口语日常': {
+                        open: `嘿，家人们！今天跟大家分享一个超实用的${topic}小窍门，咱们日常生活中都能用得上！`,
+                        problem: `说实话，很多人在弄${topic}的时候，都会遇到${kw1}这个头疼的问题，要么弄不好，要么特别费时间。`,
+                        method: `其实方法特别简单，你就按照我说的做——先准备好${kw1}，然后再弄${kw2}，注意要点，保证没问题！`,
+                        tip: `这里有个小技巧特别重要——${kw2}！很多人就是忽略了这一步，效果差了一大截。记住了，你的${topic}绝对不一样！`,
+                        end: `好啦，今天的分享就到这里！觉得有用的赶紧点赞收藏，下次需要的时候翻出来看看，咱们下期再见！`
+                    },
+                    '爆款短句': {
+                        open: `震惊！${topic}居然这么简单？！一招教你搞定！错过后悔！`,
+                        problem: `你知道吗？90%的人做${topic}都踩了这个坑！${kw1}弄错了，全白费！`,
+                        method: `重点来了！只需要三步！第一步拿${kw1}！第二步加${kw2}！第三步记住这个秘诀！完事！`,
+                        tip: `揭秘！全网都在传的${kw2}技巧！就这么一个小动作，效果直接翻倍！太绝了！`,
+                        end: `学会了吗？学会了赶紧点赞！没学会的收藏多看几遍！关注我，带你解锁更多${topic}神技！`
+                    },
+                    '专业科普': {
+                        open: `大家好，今天我们从专业角度深入解析${topic}的核心方法论。这不仅是操作技巧，更是一套完整的知识体系。`,
+                        problem: `从专业视角来看，${topic}过程中常见的${kw1}问题，其本质是操作方法与预期目标之间存在偏差。我们需要通过系统化的流程来优化。`,
+                        method: `正确的操作步骤应当遵循以下规范：首先，准备${kw1}并确保其符合标准；其次，按照既定流程处理${kw2}；最后，通过数据验证调整参数，确保输出结果达到预期指标。`,
+                        tip: `关键的技术要点在于${kw2}的精确控制。研究表明，这一步的执行精度直接影响最终效果的稳定性，误差应控制在±5%以内。`,
+                        end: `以上就是关于${topic}的专业解析。如果你对这个话题感兴趣，建议收藏并反复观看。欢迎在评论区提出你的问题，我会从专业角度为你解答。`
+                    }
+                };
+                
+                // 模板类别增强的台词
+                const templateEnhancedDialogues = {
+                    '教程': {
+                        open: `欢迎观看今天的${topic}教程！我是你的指导老师，跟着我一步一步来，保证你学会！`,
+                        problem: `很多新手在做${topic}的时候，经常会在${kw1}这一步出错，导致效果不理想。`,
+                        method: `好，现在跟着我操作！第一步，我们准备${kw1}；第二步，处理${kw2}；注意我这个动作，很关键！`,
+                        tip: `记住这个要点！${kw2}的处理方式直接决定最终效果。很多人就是这一步没做好，前功尽弃！`,
+                        end: `今天的教程就到这里！你学废了吗？有问题评论区留言，我会一一回复。记得点赞、关注、收藏，我们下期见！`
+                    },
+                    '科普': {
+                        open: `欢迎来到知识科普时间！今天让我们深入了解${topic}背后的科学原理。`,
+                        problem: `很多人对${topic}存在认知误区，尤其是在${kw1}的理解上。今天我从科学角度为大家解析。`,
+                        method: `根据研究数据，${kw1}和${kw2}之间存在必然联系。正确的认知是：...（科学解析）`,
+                        tip: `专业提示：${kw2}的原理涉及多个学科知识。掌握这个知识点，你就能举一反三了。`,
+                        end: `以上就是关于${topic}的完整科普。如果你觉得有用，欢迎关注我，我会持续为大家带来更多专业知识！`
+                    },
+                    '种草': {
+                        open: `家人们！今天必须给你们种草这个${topic}！真的太好用了，用完直接离不开！`,
+                        problem: `之前我一直被${kw1}困扰，试了好多产品都不满意。直到我发现了这个方法！`,
+                        method: `你们看！只需要用${kw1}配合${kw2}，效果绝了！真的不骗你们，亲测有效！`,
+                        tip: `最后这个步骤很重要！用${kw2}收尾，效果直接翻倍！我用空了三瓶了，真的推荐！`,
+                        end: `这么好用的${topic}我不允许你们不知道！链接在评论区，快去买！买它！买它！`
+                    },
+                    '剧情': {
+                        open: `唉，最近因为${kw1}这件事，我真的太头疼了！有没有人跟我一样的？`,
+                        problem: `不知道你们有没有这种感觉，每次想做${topic}的时候，不是${kw1}搞不定，就是${kw2}弄不好。`,
+                        method: `后来我发现了一个绝妙的方法！你们猜是什么？没错，就是这个——先${kw1}再${kw2}！绝了！`,
+                        tip: `最后教你们一个神操作！${kw2}的时候加上这个技巧，保证你们跟我一样惊喜！`,
+                        end: `今天的分享你们觉得有用吗？有同感的扣1！还想看什么内容，评论区告诉我！`
+                    },
+                    '实用': {
+                        open: `大家好！今天分享一个${topic}的生活小妙招，简单又实用，学会能省不少事！`,
+                        problem: `在日常生活中，${kw1}这个问题困扰着很多人。今天教你一招解决！`,
+                        method: `方法很简单！首先准备好${kw1}，然后按照我的步骤处理${kw2}，保证你一看就会！`,
+                        tip: `重点来了！这个${kw2}的小技巧很多人不知道，学会了你就是朋友圈最靓的仔！`,
+                        end: `今天的实用小妙招就分享到这里！觉得有用的记得点赞收藏，你们的支持是我更新的动力！`
+                    },
+                    '时尚': {
+                        open: `今天的穿搭分享来了！如果你也喜欢${topic}风格，这期视频一定要看完！`,
+                        problem: `很多人在${topic}的时候不知道怎么搭配，尤其是${kw1}和${kw2}的组合，总是踩雷。`,
+                        method: `我的搭配秘诀是：先用${kw1}作为主色调，再用${kw2}作为点缀，绝不踩雷！`,
+                        tip: `最后这个配饰选择很关键！${kw2}的选择直接决定整体造型的成败，一定要重视！`,
+                        end: `今天的时尚穿搭分享就到这里！你们喜欢这种风格吗？评论区告诉我，下期想看什么穿搭！`
+                    },
+                    '旅行': {
+                        open: `嗨喽大家好！今天带大家来到这个超美的地方——${topic}！跟我一起云旅游吧！`,
+                        problem: `来${topic}之前我也纠结过很多问题，比如${kw1}、${kw2}这些，到底该怎么安排？`,
+                        method: `根据我的经验，首先${kw1}是必打卡项目，然后${kw2}绝对不能错过！保姆级攻略来了！`,
+                        tip: `悄悄告诉你们！${kw2}的最佳体验时间是在下午三点左右，人少景美，拍照超出片！`,
+                        end: `今天的旅行分享就到这里！你们想去这个地方吗？评论区告诉我，还想看哪里的攻略！`
+                    },
+                    '职场': {
+                        open: `职场小白必看！今天分享一个${topic}的实用技巧，学会了领导都夸你！`,
+                        problem: `很多职场新人在${topic}的时候，经常在${kw1}和${kw2}之间把握不好分寸，导致效果不好。`,
+                        method: `我的经验是：${kw1}要谨慎处理，${kw2}要主动争取。掌握这个职场生存法则就够了！`,
+                        tip: `最后提醒一点！${kw2}的时候一定要记得...（关键提醒）这可能直接影响你的年终考核！`,
+                        end: `今天的职场干货就分享到这里！觉得有用的记得收藏，关注我，带你玩转职场！`
+                    },
+                    '健身': {
+                        open: `健身打卡第四天！今天跟大家分享${topic}的正确打开方式，跟着练绝对有效！`,
+                        problem: `很多人在做${topic}的时候，动作不规范，尤其是${kw1}这个细节最容易出错。`,
+                        method: `正确的方法是：先调整好${kw1}的姿势，然后发力点放在${kw2}，注意呼吸配合！`,
+                        tip: `最关键的点来了！${kw2}的时候要收紧核心，保持30秒。你能做到吗？挑战一下！`,
+                        end: `今天的健身教程就到这里！跟着练的记得评论区打卡，我们一起变美变帅！加油！`
+                    },
+                    '萌宠': {
+                        open: `太可爱了！今天的主角是这只小可爱——${topic}！你们准备好了吗？`,
+                        problem: `养宠物的都知道，${kw1}这个问题真的很让人头疼。尤其是${topic}的时候，特别难处理。`,
+                        method: `后来我发现了一个绝招！用${kw1}配合${kw2}，小可爱立刻乖乖听话，太神奇了！`,
+                        tip: `最后这个互动技巧一定要教你们！${kw2}的时候这样做，宠物会更喜欢你哦！`,
+                        end: `今天的萌宠日常就到这里！你们喜欢这只小可爱吗？喜欢的话点个赞，我们下期见！`
+                    }
+                };
+                
+                // 如果有模板类别，返回增强版台词
+                if (templateCategory && templateEnhancedDialogues[templateCategory]) {
+                    return templateEnhancedDialogues[templateCategory];
+                }
+                
+                // 否则返回基础风格台词
+                return dialogues[style] || dialogues['口语日常'];
+            }
+            
+            // 根据时长生成镜头脚本
+            function getShots(duration, topic, kw1, kw2, scene, dialogue) {
+                const shots = {
+                    '15s': [
+                        {
+                            time: '0-5秒',
+                            title: '强开场',
+                            visual: `快速切入${scene.scene}，主角手持${scene.prop.split('、')[0]}面对镜头，表情兴奋自信。镜头运动迅速，背景虚化突出主体。`,
+                            dialogue: dialogue.open,
+                            audio: '快节奏鼓点',
+                            music: '高能量电子乐'
+                        },
+                        {
+                            time: '5-11秒',
+                            title: '核心演示',
+                            visual: `特写镜头展示${kw1}的${scene.action}过程，手部动作清晰，配合文字提示。光线明亮，突出细节。`,
+                            dialogue: dialogue.method,
+                            audio: '操作音效',
+                            music: '节奏保持稳定'
+                        },
+                        {
+                            time: '11-15秒',
+                            title: '成果展示',
+                            visual: `快速切换到${scene.result}的成品画面，主角满意展示，镜头缓慢拉远。`,
+                            dialogue: dialogue.end,
+                            audio: '成功音效',
+                            music: '渐强收尾'
+                        }
+                    ],
+                    '30s': [
+                        {
+                            time: '0-6秒',
+                            title: '吸引注意',
+                            visual: `全景展示${scene.scene}环境，主角自然走入画面，表情亲切。光线柔和，营造舒适氛围。`,
+                            dialogue: dialogue.open,
+                            audio: '轻快铃声',
+                            music: '轻松愉悦'
+                        },
+                        {
+                            time: '6-12秒',
+                            title: '痛点共鸣',
+                            visual: `特写${kw1}的错误做法，主角表情困惑无奈，展示常见问题场景。`,
+                            dialogue: dialogue.problem,
+                            audio: '疑问音效',
+                            music: '节奏放缓'
+                        },
+                        {
+                            time: '12-18秒',
+                            title: '方法教学',
+                            visual: `中景展示正确${scene.action}步骤，动作规范清晰，配合文字标注。`,
+                            dialogue: dialogue.method,
+                            audio: '自然音效',
+                            music: '节奏适中'
+                        },
+                        {
+                            time: '18-24秒',
+                            title: '效果对比',
+                            visual: `分屏对比：左侧错误做法，右侧正确做法，差异一目了然。`,
+                            dialogue: dialogue.tip,
+                            audio: '对比提示音',
+                            music: '节奏加强'
+                        },
+                        {
+                            time: '24-30秒',
+                            title: '总结号召',
+                            visual: `全景展示${scene.result}成果，主角自信总结，邀请互动。`,
+                            dialogue: dialogue.end,
+                            audio: '欢快结尾',
+                            music: '积极渐强'
+                        }
+                    ],
+                    '60s': [
+                        {
+                            time: '0-8秒',
+                            title: '场景引入',
+                            visual: `全景展示${scene.scene}完整环境，细节丰富，主角从容走入画面。光线温暖，营造沉浸感。`,
+                            dialogue: dialogue.open,
+                            audio: '舒缓钢琴',
+                            music: '优雅背景乐'
+                        },
+                        {
+                            time: '8-15秒',
+                            title: '问题剖析',
+                            visual: `特写展示${kw1}的多种错误表现，主角逐一分析，表情认真。`,
+                            dialogue: dialogue.problem,
+                            audio: '分析音效',
+                            music: '节奏平缓'
+                        },
+                        {
+                            time: '15-22秒',
+                            title: '原理解析',
+                            visual: `中景配合图表/示意图，讲解${topic}背后的核心逻辑。`,
+                            dialogue: `从原理上来说，${kw1}和${kw2}的配合是关键。理解了这一点，${topic}就不再是难题。`,
+                            audio: '强调音效',
+                            music: '保持稳定'
+                        },
+                        {
+                            time: '22-30秒',
+                            title: '详细演示',
+                            visual: `多机位切换：特写手部动作、中景整体操作、全景环境。步骤清晰标注。`,
+                            dialogue: `第一步：准备好${kw1}，检查质量；第二步：按照标准流程操作${kw2}；第三步：验收${scene.result}。`,
+                            audio: '操作自然音',
+                            music: '节奏配合'
+                        },
+                        {
+                            time: '30-38秒',
+                            title: '关键技巧',
+                            visual: `慢动作特写${kw2}的关键细节，配合放大镜效果，确保观众看清。`,
+                            dialogue: dialogue.tip,
+                            audio: '强调重音',
+                            music: '突出重点'
+                        },
+                        {
+                            time: '38-45秒',
+                            title: '避坑指南',
+                            visual: `对比画面：左侧"新手常犯错误"，右侧"专业正确做法"。`,
+                            dialogue: `常见的坑有两个：一是${kw1}选择不当，二是${kw2}时机不对。避开这两个坑，成功率提升80%！`,
+                            audio: '警示音效',
+                            music: '紧张氛围'
+                        },
+                        {
+                            time: '45-52秒',
+                            title: '成果验收',
+                            visual: `前后对比蒙太奇，展示从准备到${scene.result}的完整过程。`,
+                            dialogue: `看看这个对比效果！左边是之前的，右边是用了今天方法后的。差距是不是很明显？`,
+                            audio: '惊叹音效',
+                            music: '高潮迭起'
+                        },
+                        {
+                            time: '52-60秒',
+                            title: '总结升华',
+                            visual: `全景收尾，主角真诚面对镜头，背景展示${scene.result}成品。`,
+                            dialogue: dialogue.end,
+                            audio: '掌声欢呼',
+                            music: '温暖收尾'
+                        }
+                    ]
+                };
+                return shots[duration] || shots['30s'];
+            }
+            
+            // 根据字数限制调整台词长度
+            function adjustByWordLimit(text, limit) {
+                if (!limit || limit <= 0) return text;
+                const currentLength = text.length;
+                if (currentLength > limit) {
+                    // 如果超过限制，进行精简
+                    return text.substring(0, limit - 3) + '...';
+                }
+                return text;
+            }
+            
+            const scene = getSceneByTopic(topic);
+            const dialogue = getDialogue(style, topic, kw1, kw2, scene);
+            const shots = getShots(duration, topic, kw1, kw2, scene, dialogue);
+            
+            const wordLimit = parseInt(document.getElementById('word-limit').value) || 0;
+            
+            // 构建脚本
+            let script = `【短视频脚本】
+主题：${topic}
+关键词：${keywordsList.join('、')}
+时长：${duration}
+风格：${style}
+场景：${scene.scene}
+预期效果：${scene.result}
+
+===分镜头脚本===\n`;
+            
+            shots.forEach((shot, index) => {
+                script += `
+镜头${index + 1}：[${shot.time}] ${shot.title}
+画面：${shot.visual}
+台词："${adjustByWordLimit(shot.dialogue, wordLimit > 0 ? Math.floor(wordLimit / shots.length) : 0)}"
+音效：${shot.audio}
+背景音乐：${shot.music}
+字幕：${shot.title} | ${kw1 || '重点'}
+`;
+            });
+            
+            script += `
+===拍摄要点===
+1. 场景选择：${scene.scene}环境整洁明亮，道具摆放有序，突出${topic}主题氛围
+2. 光线布置：采用柔光照明，避免阴影干扰，确保${scene.action}过程清晰可见
+3. 镜头语言：合理运用特写（展示${kw1}细节）、中景（展示${scene.action}）、全景（展示环境）
+4. 表演指导：表情自然真实，动作流畅规范，语速配合${duration}时长节奏
+5. 后期建议：添加文字标注强调${kw2 || '关键步骤'}，适当加速处理${scene.action}过程
+
+===核心要点===
+关键道具：${scene.prop}
+核心动作：${scene.action}
+成功标准：${scene.result}
+注意事项：${kw1}质量直接影响效果，${kw2 || '操作'}细节决定成败
+
+===风格说明===
+本文案采用${style}风格：
+${style === '口语日常' ? '- 语言亲切自然，像朋友聊天\n- 使用"咱们"、"你"等称呼拉近距离\n- 避免专业术语，用大白话解释\n- 语气轻松活泼，带生活气息' : 
+  style === '爆款短句' ? '- 短句为主，节奏明快\n- 多用感叹号增强情绪\n- 设置悬念和反转\n- 数字量化增强说服力' : 
+  '- 逻辑严谨，层次分明\n- 专业术语准确使用\n- 数据支撑观点\n- 客观理性分析'}
+`;
+            
+            return script;
+        }
+        
+        // 显示脚本
+        function displayScript(content) {
+            document.getElementById('script-result').textContent = content;
+        }
+        
+        // 切换版本
+        function switchVersion(version) {
+            currentVersion = version;
+            const tabs = document.querySelectorAll('.version-tab');
+            tabs.forEach((tab, index) => {
+                tab.classList.toggle('active', index === version - 1);
+            });
+            
+            const content = version === 1 ? scriptContent : scriptContentV2;
+            displayScript(content);
+            updateWordCount();
+            parseSegments();
+        }
+        
+        // 更新字数统计
+        function updateWordCount() {
+            const content = currentVersion === 1 ? scriptContent : scriptContentV2;
+            const wordCount = content.replace(/\s/g, '').length;
+            document.getElementById('total-words').textContent = wordCount;
+        }
+        
+        // 解析分段
+        function parseSegments() {
+            const content = currentVersion === 1 ? scriptContent : scriptContentV2;
+            const lines = content.split('\n').filter(line => line.trim());
+            
+            const segmentList = document.getElementById('segment-list');
+            segmentList.innerHTML = '';
+            
+            lines.forEach((line, index) => {
+                if (line.includes('：') || line.includes(':')) {
+                    const div = document.createElement('div');
+                    div.className = 'segment-copy';
+                    div.innerHTML = `
+                        <p>${line}</p>
+                        <button onclick="copySegment('${line.replace(/'/g, "\\'")}')">复制</button>
+                    `;
+                    segmentList.appendChild(div);
+                }
+            });
+            
+            document.getElementById('segment-section').style.display = segmentList.children.length > 0 ? 'block' : 'none';
+        }
+        
+        // 复制分段
+        function copySegment(text) {
+            navigator.clipboard.writeText(text).then(() => {
+                showAlert('已复制到剪贴板', 'success');
+            });
+        }
+        
+        // 润色脚本
+        async function polishScript(polishType) {
+            const content = currentVersion === 1 ? scriptContent : scriptContentV2;
+            if (!content) {
+                showAlert('请先生成脚本', 'error');
+                return;
+            }
+            
+            document.getElementById('loading-overlay').style.display = 'flex';
+            
+            try {
+                const token = getToken();
+                const headers = { 'Content-Type': 'application/json' };
+                if (token) {
+                    headers['Authorization'] = `Bearer ${token}`;
+                }
+                
+                const response = await fetch(`${API_BASE_URL}/script/polish`, {
+                    method: 'POST',
+                    headers: headers,
+                    body: JSON.stringify({
+                        script_content: content,
+                        polish_type: polishType
+                    })
+                });
+                
+                const result = await response.json();
+                
+                if (result.code === 200) {
+                    if (currentVersion === 1) {
+                        scriptContent = result.data.polished_content;
+                    } else {
+                        scriptContentV2 = result.data.polished_content;
+                    }
+                    displayScript(result.data.polished_content);
+                    updateWordCount();
+                    parseSegments();
+                    showAlert('润色完成', 'success');
+                } else {
+                    showAlert(result.message, 'error');
+                }
+            } catch (error) {
+                showAlert('润色失败', 'error');
+            } finally {
+                document.getElementById('loading-overlay').style.display = 'none';
+            }
+        }
+        
+        // 自动排版
+        function formatScript() {
+            const content = currentVersion === 1 ? scriptContent : scriptContentV2;
+            if (!content) {
+                showAlert('请先生成脚本', 'error');
+                return;
+            }
+            
+            // 简单排版：添加分隔线
+            let formatted = content;
+            formatted = formatted.replace(/===/g, '\n' + '='.repeat(50) + '\n');
+            formatted = formatted.replace(/【/g, '\n\n【');
+            
+            if (currentVersion === 1) {
+                scriptContent = formatted;
+            } else {
+                scriptContentV2 = formatted;
+            }
+            
+            displayScript(formatted);
+            updateWordCount();
+            parseSegments();
+            showAlert('排版完成', 'success');
+        }
+        
+        // 敏感词检测
+        async function detectSensitive() {
+            const content = currentVersion === 1 ? scriptContent : scriptContentV2;
+            if (!content) {
+                showAlert('请先生成脚本', 'error');
+                return;
+            }
+            
+            try {
+                const token = getToken();
+                const headers = { 'Content-Type': 'application/json' };
+                if (token) {
+                    headers['Authorization'] = `Bearer ${token}`;
+                }
+                
+                const response = await fetch(`${API_BASE_URL}/script/sensitive`, {
+                    method: 'POST',
+                    headers: headers,
+                    body: JSON.stringify({ content })
+                });
+                
+                const result = await response.json();
+                
+                if (result.code === 200) {
+                    if (result.data.has_sensitive) {
+                        document.getElementById('sensitive-section').style.display = 'block';
+                        document.getElementById('sensitive-words').textContent = result.data.words.join(', ');
+                        document.getElementById('script-result').classList.add('sensitive');
+                        
+                        // 高亮敏感词
+                        let highlighted = content;
+                        result.data.words.forEach(word => {
+                            const regex = new RegExp(word, 'g');
+                            highlighted = highlighted.replace(regex, `<span class="sensitive-word">${word}</span>`);
+                        });
+                        document.getElementById('script-result').innerHTML = highlighted;
+                        
+                        showAlert('检测到敏感词，请注意修改', 'error');
+                    } else {
+                        document.getElementById('sensitive-section').style.display = 'none';
+                        document.getElementById('script-result').classList.remove('sensitive');
+                        displayScript(content);
+                        showAlert('未检测到敏感词', 'success');
+                    }
+                }
+            } catch (error) {
+                showAlert('检测失败', 'error');
+            }
+        }
+        
+        // 保存脚本
+        async function saveScript() {
+            const content = currentVersion === 1 ? scriptContent : scriptContentV2;
+            if (!content) {
+                showAlert('请先生成脚本', 'error');
+                return;
+            }
+            
+            const token = getToken();
+            if (!token) {
+                // 游客模式保存到本地
+                const savedScripts = JSON.parse(localStorage.getItem('guest_scripts') || '[]');
+                savedScripts.push({
+                    id: Date.now(),
+                    topic: topicInput.value,
+                    keywords: keywordsInput.value,
+                    script_content: content,
+                    script_content_v2: scriptContentV2,
+                    duration: durationSelect.value,
+                    style: styleSelect.value,
+                    created_at: new Date().toISOString()
+                });
+                localStorage.setItem('guest_scripts', JSON.stringify(savedScripts));
+                showAlert('已保存到本地', 'success');
+                return;
+            }
+            
+            try {
+                const response = await fetch(`${API_BASE_URL}/script/save`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        topic: topicInput.value,
+                        keywords: keywordsInput.value,
+                        script_content: content,
+                        script_content_v2: scriptContentV2,
+                        duration: durationSelect.value,
+                        style: styleSelect.value
+                    })
+                });
+                
+                const result = await response.json();
+                
+                if (result.code === 200) {
+                    showAlert('保存成功', 'success');
+                } else {
+                    showAlert(result.message, 'error');
+                }
+            } catch (error) {
+                showAlert('保存失败', 'error');
+            }
+        }
+        
+        // 跳转到编辑页
+        function goToEditor() {
+            const content = currentVersion === 1 ? scriptContent : scriptContentV2;
+            if (!content) {
+                showAlert('请先生成脚本', 'error');
+                return;
+            }
+            
+            localStorage.setItem('edit_script', JSON.stringify({
+                topic: topicInput.value,
+                content: content
+            }));
+            window.location.href = 'editor.html';
+        }
+        
+        // 退出登录
+        function logout() {
+            localStorage.removeItem('access_token');
+            localStorage.removeItem('user_info');
+            localStorage.removeItem('is_guest');
+            localStorage.removeItem('saved_username');
+            localStorage.removeItem('saved_password');
+            localStorage.removeItem('remember_checked');
+            window.location.href = 'login.html';
+        }
+    </script>
+</body>
+</html>
